@@ -1,4 +1,4 @@
-### Synasuite
+### Working on my "Synasuite"
 
 Free and open-source apps that replace the tools I use every day.
 
