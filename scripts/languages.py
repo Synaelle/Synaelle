@@ -6,7 +6,8 @@ bytes and writes assets/languages-dark.svg and assets/languages-light.svg.
 Only the Python standard library is used.
 
 The look follows the Ficelle style: warm neutrals, one small corner, 1px
-border, no shadow, Hanken Grotesk, and tag colours as 6px square marks.
+border, no shadow and Hanken Grotesk. The 6px square marks take the colours
+GitHub gives each language.
 """
 
 import argparse
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 FONT = ROOT / "assets" / "fonts" / "HankenGrotesk-subset.woff2"
 OUT = ROOT / "assets"
 
+LINGUIST = "https://raw.githubusercontent.com/github-linguist/linguist/main/lib/linguist/languages.yml"
 OWNER = os.environ.get("OWNER", "Synaelle")
 TOKEN = os.environ.get("GH_TOKEN", "")
 
@@ -37,7 +39,6 @@ THEMES = {
     "dark": {"surface": "#161414", "border": "#2E2A28", "text": "#E6DFD8", "muted": "#9A918A"},
     "light": {"surface": "#FBFAF7", "border": "#CBC6BC", "text": "#161413", "muted": "#5E5853"},
 }
-MARKS = ["#C2564A", "#C49A3C", "#7D9E68", "#6A93C4", "#9B82C6"]  # tag-red to tag-purple
 
 WIDTH = 340
 PAD = 16
@@ -76,6 +77,20 @@ def repositories():
         return list(pages(f"https://api.github.com/users/{OWNER}/repos?type=owner"))
 
 
+def language_colours():
+    """{language: colour} from linguist, the list GitHub colours its language bars from."""
+    request = urllib.request.Request(LINGUIST, headers={"User-Agent": "profile-languages"})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        lines = response.read().decode().splitlines()
+    colours, name = {}, None
+    for line in lines:
+        if line and line[0] not in " #-" and line.endswith(":"):
+            name = line[:-1].strip('"')
+        elif name and line.startswith("  color:"):
+            colours[name] = line.split(":", 1)[1].strip().strip('"')
+    return colours
+
+
 def fetch():
     totals = {}
     for repo in repositories():
@@ -100,9 +115,9 @@ def shares(totals):
     return rows
 
 
-def render(rows, theme, font):
+def render(rows, theme, font, marks):
     c = THEMES[theme]
-    colours = [MARKS[i] if name != "Other" else c["muted"] for i, (name, _) in enumerate(rows)]
+    colours = [marks.get(name, c["muted"]) for name, _ in rows]
     half = (len(rows) + 1) // 2
     height = ROW_Y + half * ROW_H + 4
     inner = WIDTH - 2 * PAD
@@ -153,10 +168,11 @@ def main():
 
     totals = json.loads(Path(args.from_json).read_text()) if args.from_json else fetch()
     rows = shares(totals)
+    marks = language_colours()
     font = base64.b64encode(FONT.read_bytes()).decode()
     OUT.mkdir(exist_ok=True)
     for theme in THEMES:
-        (OUT / f"languages-{theme}.svg").write_text(render(rows, theme, font), encoding="utf-8")
+        (OUT / f"languages-{theme}.svg").write_text(render(rows, theme, font, marks), encoding="utf-8")
     print(", ".join(f"{name} {percent:.1f}%" for name, percent in rows))
 
 
