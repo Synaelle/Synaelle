@@ -1,0 +1,37 @@
+name: languages
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/languages.py, .github/workflows/languages.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: languages
+  cancel-in-progress: true
+
+jobs:
+  card:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: draw the card
+        env:
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.LANGUAGES_TOKEN || github.token }}
+        run: python3 scripts/languages.py
+
+      - name: commit when it changed
+        run: |
+          git add assets/languages-dark.svg assets/languages-light.svg
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "update languages card"
+          git push
