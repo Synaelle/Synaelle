@@ -6,7 +6,7 @@ bytes and writes assets/languages-dark.svg and assets/languages-light.svg.
 Only the Python standard library is used.
 
 The look follows the Ficelle style: warm neutrals, one small corner, 1px
-border, no shadow and JetBrains Mono. The 6px square marks take the colours
+border, no shadow and Inconsolata. The 6px square marks take the colours
 GitHub gives each language.
 """
 
@@ -21,7 +21,7 @@ from html import escape
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FONT = ROOT / "assets" / "fonts" / "JetBrainsMono.woff2"
+FONT = ROOT / "assets" / "fonts" / "Inconsolata.woff2"
 OUT = ROOT / "assets"
 
 LINGUIST = "https://raw.githubusercontent.com/github-linguist/linguist/main/lib/linguist/languages.yml"
@@ -146,8 +146,8 @@ def render(rows, theme, font, marks):
 <title id="t">{escape(TITLE)}</title>
 <desc id="d">{escape(summary)}</desc>
 <style>
-@font-face {{ font-family: "JetBrains Mono"; font-weight: 100 800; src: url(data:font/woff2;base64,{font}) format("woff2"); }}
-text {{ font-family: "JetBrains Mono", ui-monospace, monospace; fill: {c["text"]}; }}
+@font-face {{ font-family: "Inconsolata"; font-weight: 200 900; src: url(data:font/woff2;base64,{font}) format("woff2"); }}
+text {{ font-family: "Inconsolata", ui-monospace, monospace; fill: {c["text"]}; }}
 .title {{ font-size: 14px; font-weight: 600; }}
 .row {{ font-size: 13px; font-weight: 400; }}
 .meta {{ font-size: 12px; fill: {c["muted"]}; }}
