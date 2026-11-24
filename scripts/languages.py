@@ -6,8 +6,8 @@ bytes and writes assets/languages-dark.svg and assets/languages-light.svg.
 Only the Python standard library is used.
 
 The look follows the Ficelle style: warm neutrals, one small corner, 1px
-border, no shadow and Inconsolata. The 6px square marks take the colours
-GitHub gives each language.
+border and no shadow. Words are in Ubuntu and numbers in Ubuntu Mono. The
+6px square marks take the colours GitHub gives each language.
 """
 
 import argparse
@@ -21,7 +21,9 @@ from html import escape
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FONT = ROOT / "assets" / "fonts" / "Inconsolata.woff2"
+FONTS = ROOT / "assets" / "fonts"
+FACES = [("Ubuntu", 400, "Ubuntu-Regular.woff2"), ("Ubuntu", 500, "Ubuntu-Medium.woff2"),
+         ("Ubuntu Mono", 400, "UbuntuMono-Regular.woff2")]
 OUT = ROOT / "assets"
 
 LINGUIST = "https://raw.githubusercontent.com/github-linguist/linguist/main/lib/linguist/languages.yml"
@@ -115,7 +117,7 @@ def shares(totals):
     return rows
 
 
-def render(rows, theme, font, marks):
+def render(rows, theme, faces, marks):
     c = THEMES[theme]
     colours = [marks.get(name, c["muted"]) for name, _ in rows]
     half = (len(rows) + 1) // 2
@@ -146,11 +148,11 @@ def render(rows, theme, font, marks):
 <title id="t">{escape(TITLE)}</title>
 <desc id="d">{escape(summary)}</desc>
 <style>
-@font-face {{ font-family: "Inconsolata"; font-weight: 200 900; src: url(data:font/woff2;base64,{font}) format("woff2"); }}
-text {{ font-family: "Inconsolata", ui-monospace, monospace; fill: {c["text"]}; }}
-.title {{ font-size: 14px; font-weight: 600; }}
+{faces}
+text {{ font-family: "Ubuntu", system-ui, sans-serif; fill: {c["text"]}; }}
+.title {{ font-size: 14px; font-weight: 500; }}
 .row {{ font-size: 13px; font-weight: 400; }}
-.meta {{ font-size: 12px; fill: {c["muted"]}; }}
+.meta {{ font-family: "Ubuntu Mono", ui-monospace, monospace; font-size: 12px; fill: {c["muted"]}; }}
 </style>
 <clipPath id="bar"><rect x="{PAD}" y="{BAR_Y}" width="{inner}" height="{BAR_H}" rx="2"/></clipPath>
 <rect x="0.5" y="0.5" width="{WIDTH - 1}" height="{height - 1}" rx="2" fill="{c["surface"]}" stroke="{c["border"]}"/>
@@ -169,10 +171,13 @@ def main():
     totals = json.loads(Path(args.from_json).read_text()) if args.from_json else fetch()
     rows = shares(totals)
     marks = language_colours()
-    font = base64.b64encode(FONT.read_bytes()).decode()
+    faces = "\n".join(
+        f'@font-face {{ font-family: "{family}"; font-weight: {weight}; '
+        f'src: url(data:font/woff2;base64,{base64.b64encode((FONTS / file).read_bytes()).decode()}) format("woff2"); }}'
+        for family, weight, file in FACES)
     OUT.mkdir(exist_ok=True)
     for theme in THEMES:
-        (OUT / f"languages-{theme}.svg").write_text(render(rows, theme, font, marks), encoding="utf-8")
+        (OUT / f"languages-{theme}.svg").write_text(render(rows, theme, faces, marks), encoding="utf-8")
     print(", ".join(f"{name} {percent:.1f}%" for name, percent in rows))
 
 
